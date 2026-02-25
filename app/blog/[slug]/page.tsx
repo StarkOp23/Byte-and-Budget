@@ -365,36 +365,28 @@ interface Props {
 }
 
 async function getPost(slug: string) {
-  try {
-    const post = await prisma.post.findUnique({
-      where: { slug, status: 'PUBLISHED' },
-      include: {
-        author: true,
-        category: true,
-        tags: { include: { tag: true } },
-      },
-    })
-    return post
-  } catch {
-    return null
-  }
+  const post = await prisma.post.findUnique({
+    where: { slug, status: 'PUBLISHED' },
+    include: {
+      author: true,
+      category: true,
+      tags: { include: { tag: true } },
+    },
+  })
+  return post
 }
 
 async function getRelatedPosts(postId: string, categoryId: string | null) {
-  try {
-    return await prisma.post.findMany({
-      where: {
-        status: 'PUBLISHED',
-        id: { not: postId },
-        ...(categoryId ? { categoryId } : {}),
-      },
-      include: { author: true, category: true, tags: { include: { tag: true } } },
-      orderBy: { publishedAt: 'desc' },
-      take: 3,
-    })
-  } catch {
-    return []
-  }
+  return await prisma.post.findMany({
+    where: {
+      status: 'PUBLISHED',
+      id: { not: postId },
+      ...(categoryId ? { categoryId } : {}),
+    },
+    include: { author: true, category: true, tags: { include: { tag: true } } },
+    orderBy: { publishedAt: 'desc' },
+    take: 3,
+  })
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -412,17 +404,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   })
 }
 
-export async function generateStaticParams() {
-  try {
-    const posts = await prisma.post.findMany({
-      where: { status: 'PUBLISHED' },
-      select: { slug: true },
-    })
-    return posts.map(p => ({ slug: p.slug }))
-  } catch {
-    return []
-  }
-}
+// Dynamic rendering — no static params needed with revalidate = 0
 
 export default async function BlogPostPage({ params }: Props) {
   const post = await getPost(params.slug)

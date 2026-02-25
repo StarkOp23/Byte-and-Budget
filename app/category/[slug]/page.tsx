@@ -151,7 +151,7 @@ interface Props {
 const POSTS_PER_PAGE = 12
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const category = await prisma.category.findUnique({ where: { slug: params.slug } }).catch(() => null)
+  const category = await prisma.category.findUnique({ where: { slug: params.slug } })
   if (!category) return {}
   return genMeta({
     title: `${category.name} Articles`,
@@ -164,7 +164,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const page = Number(searchParams.page) || 1
   const skip = (page - 1) * POSTS_PER_PAGE
 
-  const category = await prisma.category.findUnique({ where: { slug: params.slug } }).catch(() => null)
+  const category = await prisma.category.findUnique({ where: { slug: params.slug } })
   if (!category) notFound()
 
   const [posts, total] = await Promise.all([
@@ -174,8 +174,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       orderBy: { publishedAt: 'desc' },
       skip,
       take: POSTS_PER_PAGE,
-    }).catch(() => []),
-    prisma.post.count({ where: { categoryId: category.id, status: 'PUBLISHED' } }).catch(() => 0),
+    }),
+    prisma.post.count({ where: { categoryId: category.id, status: 'PUBLISHED' } }),
   ])
 
   const totalPages = Math.ceil(total / POSTS_PER_PAGE)

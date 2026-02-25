@@ -192,36 +192,32 @@ export const revalidate = 0 // always fetch fresh data — no caching
 export const metadata: Metadata = genMeta({})
 
 async function getPosts() {
-  try {
-    const [featured, recent, byCategory] = await Promise.all([
-      prisma.post.findMany({
-        where: { status: 'PUBLISHED', featured: true },
-        include: { author: true, category: true, tags: { include: { tag: true } } },
-        orderBy: { publishedAt: 'desc' },
-        take: 3,
-      }),
-      prisma.post.findMany({
-        where: { status: 'PUBLISHED' },
-        include: { author: true, category: true, tags: { include: { tag: true } } },
-        orderBy: { publishedAt: 'desc' },
-        take: 9,
-      }),
-      prisma.category.findMany({
-        include: {
-          posts: {
-            where: { status: 'PUBLISHED' },
-            include: { author: true, category: true, tags: { include: { tag: true } } },
-            orderBy: { publishedAt: 'desc' },
-            take: 3,
-          },
-          _count: { select: { posts: { where: { status: 'PUBLISHED' } } } },
+  const [featured, recent, byCategory] = await Promise.all([
+    prisma.post.findMany({
+      where: { status: 'PUBLISHED', featured: true },
+      include: { author: true, category: true, tags: { include: { tag: true } } },
+      orderBy: { publishedAt: 'desc' },
+      take: 3,
+    }),
+    prisma.post.findMany({
+      where: { status: 'PUBLISHED' },
+      include: { author: true, category: true, tags: { include: { tag: true } } },
+      orderBy: { publishedAt: 'desc' },
+      take: 9,
+    }),
+    prisma.category.findMany({
+      include: {
+        posts: {
+          where: { status: 'PUBLISHED' },
+          include: { author: true, category: true, tags: { include: { tag: true } } },
+          orderBy: { publishedAt: 'desc' },
+          take: 3,
         },
-      }),
-    ])
-    return { featured, recent, byCategory }
-  } catch {
-    return { featured: [], recent: [], byCategory: [] }
-  }
+        _count: { select: { posts: { where: { status: 'PUBLISHED' } } } },
+      },
+    }),
+  ])
+  return { featured, recent, byCategory }
 }
 
 const categoryIcons: Record<string, React.ComponentType<any>> = {
