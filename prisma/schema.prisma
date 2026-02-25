@@ -1,0 +1,202 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(AUTHOR)
+  bio           String?
+  twitter       String?
+  website       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  posts    Post[]
+  accounts Account[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Post {
+  id          String     @id @default(cuid())
+  title       String
+  slug        String     @unique
+  excerpt     String?    @db.Text
+  content     String     @db.Text
+  coverImage  String?
+  status      PostStatus @default(DRAFT)
+  featured    Boolean    @default(false)
+  sponsored   Boolean    @default(false)
+  views       Int        @default(0)
+  readingTime Int?       // in minutes
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  canonicalUrl    String?
+
+  // Relations
+  authorId   String
+  author     User       @relation(fields: [authorId], references: [id])
+  categoryId String?
+  category   Category?  @relation(fields: [categoryId], references: [id])
+  tags       TagOnPost[]
+
+  @@map("posts")
+}
+
+model SiteSettings {
+  id                  String   @id @default("singleton")
+  siteName            String   @default("PremiumBlog")
+  siteDescription     String?
+  siteUrl             String?
+  logoUrl             String?
+  faviconUrl          String?
+  twitterHandle       String?
+  facebookUrl         String?
+  instagramUrl        String?
+  linkedinUrl         String?
+  youtubeUrl          String?
+  googleAnalyticsId   String?
+  adsenseClientId     String?
+  resendApiKey        String?
+  fromEmail           String?
+  emailSignature      String?
+  footerText          String?
+  maintenanceMode     Boolean  @default(false)
+  allowComments       Boolean  @default(false)
+  postsPerPage        Int      @default(12)
+  updatedAt           DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  postId    String?
+  path      String
+  country   String?
+  device    String?
+  referrer  String?
+  createdAt DateTime @default(now())
+
+  @@map("page_views")
+  @@index([createdAt])
+  @@index([postId])
+  @@index([path])
+}
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String?
+  color       String? // hex color for UI
+  icon        String? // emoji or icon name
+  createdAt   DateTime @default(now())
+
+  posts Post[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+
+  posts TagOnPost[]
+
+  @@map("tags")
+}
+
+model TagOnPost {
+  postId String
+  tagId  String
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@map("tags_on_posts")
+}
+
+model NewsletterSubscriber {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String?
+  confirmed   Boolean  @default(false)
+  token       String?  @unique
+  createdAt   DateTime @default(now())
+
+  @@map("newsletter_subscribers")
+}
+
+model AffiliateClick {
+  id        String   @id @default(cuid())
+  postId    String?
+  url       String
+  label     String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@map("affiliate_clicks")
+}
+
+enum Role {
+  ADMIN
+  AUTHOR
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
