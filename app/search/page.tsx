@@ -86,9 +86,9 @@
 
 
 
+'use client'
 export const revalidate = 0
 
-'use client'
 // app/search/page.tsx
 import { useState } from 'react'
 import { Header } from '@/components/blog/Header'
